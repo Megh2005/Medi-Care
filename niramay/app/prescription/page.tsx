@@ -513,7 +513,7 @@ export default function PrescriptionScannerPage() {
                       />
                     </label>
                     <p className="mt-4 text-sm text-gray-500">
-                      Supported formats: JPG, PNG, PDF
+                      Supported formats: JPG, PNG
                     </p>
                   </div>
                 ) : (

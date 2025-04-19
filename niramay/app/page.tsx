@@ -17,8 +17,8 @@ export default function Home() {
               and manage your prescriptions all in one place.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/services" className="neo-brutalist-button flex items-center gap-2">
-                Learn More <ArrowRight size={20} />
+              <Link href="/prescription" className="neo-brutalist-button flex items-center gap-2">
+                Scan Prescription <ArrowRight size={20} />
               </Link>
               <Link href="/doctor-search" className="neo-brutalist-button bg-black text-white flex items-center gap-2">
                 Find a Doctor <ArrowRight size={20} />
