@@ -30,7 +30,7 @@ const WalletConnectButton = () => {
         className="bg-black text-base text-white px-4 py-2 font-bold hover:bg-black/85"
       >
         {userAddress
-          ? `${userAddress.slice(0, 12)}...${userAddress.slice(-13)}`
+          ? `${userAddress.slice(0, 5)}...${userAddress.slice(-6)}`
           : "Connect Wallet"}
       </button>
     </div>
