@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Disable scrollbar but keep scroll functionality */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+}
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --primary: 355 78% 60%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --accent: 262 83% 58%;
+  --accent-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 355 78% 60%;
+  --radius: 0.5rem;
+}
+
+.color-blind {
+  --primary: 220 70% 50%;
+  --accent: 30 90% 50%;
+}
+
+/* Neo-brutalism styles */
+.neo-brutalist-card {
+  @apply bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] 
+  hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.8)] transition-all duration-200;
+}
+
+.neo-brutalist-button {
+  @apply bg-primary text-white font-bold py-3 px-6 border-4 border-black 
+  shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.8)]
+  active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[3px] active:translate-y-[3px]
+  transition-all duration-200;
+}
+
+.neo-brutalist-input {
+  @apply bg-white border-4 border-black p-3 w-full focus:outline-none
+  focus:ring-4 focus:ring-primary focus:ring-opacity-50;
+}
+
+/* Braille compatibility - increased contrast and focus indicators */
+:focus {
+  @apply outline-4 outline-black;
+}
+
+body {
+  @apply bg-[#f8f5f2] text-black;
+}
+
+/* Accessibility classes */
+.sr-only {
+  @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+}

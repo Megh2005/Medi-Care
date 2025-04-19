@@ -1,0 +1,6 @@
+POST http://127.0.0.1:8000/match-doctor
+Content-Type: application/json
+
+{
+  "description": "For the past 3 months, I've been experiencing chronic pain and stiffness in my right knee, especially after physical activity or prolonged periods of sitting. The knee occasionally swells and feels unstable while walking or climbing stairs, and I've started hearing a clicking sound with movement. Over-the-counter painkillers provide only temporary relief. I have a history of a sports-related injury to the same knee from a few years ago. The discomfort is now interfering with my mobility and daily activities. I need an orthopedic consultation to assess the extent of joint damage, possibly through X-rays or an MRI, and to explore treatment options such as physiotherapy, injections, or surgery if required."
+}
