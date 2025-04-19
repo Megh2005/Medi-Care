@@ -8,16 +8,16 @@ declare global {
   }
 }
 
-const EDU_TESTNET_PARAMS = {
-  chainId: "0xa045c", // Hexadecimal of 656476 (verified from ChainList)
-  chainName: "Edu Chain Testnet",
+const AVA_TESTNET_PARAMS = {
+  chainId: "0xa869",
+  chainName: "Avalanche Fuji Testnet",
   nativeCurrency: {
-    name: "EduCoin",
-    symbol: "EDU",
+    name: "Avalanche Fuji",
+    symbol: "AVAX",
     decimals: 18,
   },
-  rpcUrls: ["https://rpc.open-campus-codex.gelato.digital"], // Verified RPC URL
-  blockExplorerUrls: ["https://edu-chain-testnet.blockscout.com"], // Verified Explorer URL
+  rpcUrls: ["https://api.zan.top/avax-fuji/ext/bc/C/rpc"],
+  blockExplorerUrls: ["https://testnet.snowtrace.io"],
 };
 
 export const connectWallet = async (
@@ -40,25 +40,25 @@ export const connectWallet = async (
     setIsConnected(true);
 
     const { chainId } = await provider.getNetwork();
-    const eduTestnetId = "656476";
+    const fujiTestnetId = "43113";
 
-    if (parseInt(chainId.toString(), 16) !== parseInt(eduTestnetId)) {
+    if (parseInt(chainId.toString(), 16) !== parseInt(fujiTestnetId)) {
       try {
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: EDU_TESTNET_PARAMS.chainId }],
+          params: [{ chainId: AVA_TESTNET_PARAMS.chainId }],
         });
-        toast.success("Switched To Edu Chain Testnet");
+        toast.success("Switched To Avalanche Fuji Testnet");
       } catch (switchError: any) {
         if (switchError.code === 4902) {
           try {
             await window.ethereum.request({
               method: "wallet_addEthereumChain",
-              params: [EDU_TESTNET_PARAMS],
+              params: [AVA_TESTNET_PARAMS],
             });
-            toast.success("Edu Chain Testnet Added and Switched");
+            toast.success("Avalanche Fuji Testnet Added and Switched");
           } catch (addError) {
-            toast.error("Failed to Add Edu Chain Testnet");
+            toast.error("Failed to Add Avalanche Fuji Testnet");
             console.error("Error adding network:", addError);
           }
         } else {
