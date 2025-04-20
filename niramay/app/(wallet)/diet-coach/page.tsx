@@ -1,7 +1,13 @@
 "use client";
 
+import { uploadFileToIPFS, uploadJSONToIPFS } from "@/utils/pinata";
+import { ethers } from "ethers";
+import { toPng } from "html-to-image";
 import type React from "react";
-import { useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import marketplace from "@/lib/marketplace.json";
+import { WalletContext } from "@/context/Wallet";
 
 type GeminiResponse = {
   calorieNeeds: number;
@@ -28,11 +34,17 @@ export default function DietCoachPage() {
     goal: "maintain",
     dietaryRestrictions: [] as string[],
   });
+  const { isConnected, signer } = useContext(WalletContext);
+  const nftPrice = "1000";
+  const description = "Personalized Diet Plan";
+  const name = `Diet Plan ${Date.now()}`;
+  const [fileUrl, setFileUrl] = useState<string | undefined>(undefined);
 
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState<GeminiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -161,7 +173,7 @@ Provide the following in JSON format:
   };
 
   // Print functionality
-  const handlePrint = () => {
+  /*const handlePrint = () => {
     const printContent = document.getElementById("printSection");
     const WinPrint = window.open("", "", "width=900,height=650");
 
@@ -413,7 +425,171 @@ Provide the following in JSON format:
         WinPrint.close();
       }, 500);
     }
+  };*/
+
+  const captureAndUploadImageToIPFS = async (): Promise<string | undefined> => {
+    console.log("Capturing element:", ref.current);
+    if (ref.current === null) return undefined;
+
+    try {
+      const dataUrl = await toPng(ref.current, { cacheBust: true });
+
+      // Convert data URL to Blob
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+
+      console.log("Blob created:", blob);
+
+      // Upload to IPFS
+      const fd = new FormData();
+      fd.append("file", blob, "diet-coach.png");
+
+      const uploadPromise = uploadFileToIPFS(fd);
+      toast.promise(
+        uploadPromise,
+        {
+          loading: "Uploading Diet Plan...",
+          success: "Diet Plan Uploaded Successfully",
+          error: "Error uploading Diet Plan",
+        },
+        { duration: 5000 }
+      );
+
+      const response = await uploadPromise;
+
+      console.log("IPFS upload response:", response);
+
+      if (response.success === true) {
+        console.log("Pinata URL obtained:", response.pinataURL);
+        return response.pinataURL as string;
+      }
+
+      return undefined;
+    } catch (error) {
+      console.error("Error capturing and uploading certificate image:", error);
+      return undefined;
+    }
   };
+
+  // Modified uploadMetadataToIPFS that takes the URL as a parameter
+  const uploadMetadataWithUrl = async (
+    imageUrl: string
+  ): Promise<string | undefined> => {
+    if (!name || !description || !imageUrl) {
+      console.error("Missing required metadata fields");
+      return undefined;
+    }
+
+    console.log("Uploading metadata with image URL:", imageUrl);
+
+    const nftJSON = {
+      name,
+      description,
+      price: nftPrice,
+      image: imageUrl,
+    };
+
+    try {
+      const response = await uploadJSONToIPFS(nftJSON);
+      if (response.success === true) {
+        console.log("Metadata uploaded successfully:", response.pinataURL);
+        return response.pinataURL;
+      }
+      return undefined;
+    } catch (e) {
+      console.error("Error uploading JSON metadata:", e);
+      throw e;
+    }
+  };
+
+  // New function to list NFT with explicit URL parameter
+  async function listNFTWithUrl(imageUrl: string) {
+    if (!isConnected) {
+      toast.error("Please connect your wallet to proceed.");
+      return;
+    }
+
+    if (!signer) {
+      toast.error("Signer not available");
+      return;
+    }
+
+    try {
+      const metadataURLPromise = uploadMetadataWithUrl(imageUrl);
+      toast.promise(metadataURLPromise, {
+        loading: "Uploading NFT Metadata...",
+        success: "NFT Metadata Uploaded Successfully",
+        error: "NFT Metadata Upload Failed",
+      });
+
+      const metadataURL = await metadataURLPromise;
+
+      if (!metadataURL) {
+        throw new Error("Failed to get metadata URL");
+      }
+
+      console.log("Metadata URL obtained:", metadataURL);
+
+      const contract = new ethers.Contract(
+        marketplace.address,
+        marketplace.abi,
+        signer
+      );
+      const price = ethers.parseEther(nftPrice);
+
+      console.log(
+        "Creating token with metadata:",
+        metadataURL,
+        "and price:",
+        price.toString()
+      );
+
+      const transactionPromise = contract.createToken(metadataURL, price);
+      toast.promise(transactionPromise, {
+        loading: "Creating NFT...",
+        success: "Transaction submitted",
+        error: "Error creating NFT",
+      });
+
+      const transaction = await transactionPromise;
+      console.log("Transaction submitted:", transaction.hash);
+
+      const receiptPromise = transaction.wait();
+      toast.promise(receiptPromise, {
+        loading: "Waiting for transaction confirmation...",
+        success: "NFT Listed Successfully",
+        error: "Transaction failed",
+      });
+
+      await receiptPromise;
+    } catch (e) {
+      console.error("Error listing NFT:", e);
+      toast.error("Failed to list NFT");
+    }
+  }
+
+  useEffect(() => {
+    if (!aiResponse) return;
+
+    setTimeout(async () => {
+      try {
+        // Get the URL directly from the function return value
+        const imageUrl = await captureAndUploadImageToIPFS();
+
+        // Set the state for future reference
+        if (imageUrl) {
+          setFileUrl(imageUrl);
+
+          // Pass the URL directly to listNFT
+        } else {
+          throw new Error("Failed to get image URL");
+        }
+      } catch (error) {
+        console.error("Error in NFT creation process:", error);
+        toast.error("Failed to create NFT");
+      }
+    }, 300);
+  }, [aiResponse]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -580,10 +756,17 @@ Provide the following in JSON format:
                     <h2 className="text-2xl font-bold">Your Diet Plan</h2>
                     <div className="flex space-x-2">
                       <button
-                        onClick={handlePrint}
+                        onClick={async () => {
+                          if (fileUrl) {
+                            await listNFTWithUrl(fileUrl);
+                            toast.success("NFT listed successfully!");
+                          } else {
+                            toast.error("Failed to create NFT");
+                          }
+                        }}
                         className="text-sm font-medium px-3 py-1 border-2 border-black hover:bg-gray-100"
                       >
-                        Print Plan
+                        Mint Plan
                       </button>
                       <button
                         onClick={() => setShowResults(false)}
@@ -600,7 +783,7 @@ Provide the following in JSON format:
                     </div>
                   )}
 
-                  <div className="space-y-6">
+                  <div ref={ref} className="space-y-6">
                     <div>
                       <h3 className="text-xl font-bold mb-2">
                         Daily Caloric Needs
