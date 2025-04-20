@@ -23,9 +23,6 @@ interface PrescriptionResult {
 }
 
 const ProfileRecords = () => {
-  const [selectedTab, setSelectedTab] = useState<"prescriptions" | "diet">(
-    "diet"
-  );
   const [loading, setLoading] = useState(false);
   const [onChainDocuments, setOnChainDocuments] = useState<
     PrescriptionResult[]
@@ -82,10 +79,7 @@ const ProfileRecords = () => {
     <div className="flex gap-4">
       <Dialog>
         <DialogTrigger asChild>
-          <button
-            onClick={() => setSelectedTab("prescriptions")}
-            className="px-4 py-2 font-bold bg-red-500 text-white border-2 border-black hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
-          >
+          <button className="px-4 py-2 font-bold bg-red-500 text-white border-2 border-black hover:bg-red-600 transition-colors flex items-center justify-center gap-2">
             <NotepadText size={16} />
             On Chain Documents
           </button>
