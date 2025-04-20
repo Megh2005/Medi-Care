@@ -3,9 +3,15 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useCallback, useContext, useRef, useState } from "react";
 import { Upload, X, Check, AlertTriangle, Info, Pill } from "lucide-react";
 import Image from "next/image";
+import { ethers } from "ethers";
+import marketplace from "@/lib/marketplace.json";
+import { toPng } from "html-to-image";
+import toast from "react-hot-toast";
+import { uploadFileToIPFS, uploadJSONToIPFS } from "@/utils/pinata";
+import { WalletContext } from "@/context/Wallet";
 
 interface MedicationInfo {
   name: string;
@@ -317,6 +323,14 @@ export default function PrescriptionScannerPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showMedicalTerms, setShowMedicalTerms] = useState<boolean>(true);
+  const ref = useRef<HTMLDivElement>(null);
+  const [fileUrl, setFileUrl] = useState<string>("");
+  const nftPrice = "1000";
+  const name = `Prescription Certificate #${Date.now()}`;
+  const description =
+    "This NFT represents a digital certificate for the prescription scanned and analyzed using our AI technology.";
+
+  const { signer, isConnected } = useContext(WalletContext);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -338,6 +352,7 @@ export default function PrescriptionScannerPage() {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0];
       setFile(droppedFile);
@@ -355,9 +370,9 @@ export default function PrescriptionScannerPage() {
     }
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-  };
+  }, []);
 
   const handleRemoveFile = () => {
     setFile(null);
@@ -367,6 +382,11 @@ export default function PrescriptionScannerPage() {
   };
 
   const handleAnalyze = async () => {
+    if (!isConnected) {
+      toast.error("Please connect your wallet to proceed.");
+      return;
+    }
+
     if (!file) return;
 
     setIsLoading(true);
@@ -375,7 +395,7 @@ export default function PrescriptionScannerPage() {
     try {
       // Convert the image to base64
       const base64Image = await convertFileToBase64(file);
-      const imageData = base64Image.split(",")[1]; // Remove the data URL prefix
+      const imageData = base64Image.split(",")[1];
 
       const response = await fetch("/api/prescription", {
         method: "POST",
@@ -393,23 +413,32 @@ export default function PrescriptionScannerPage() {
       }
 
       const data = await response.json();
-
-      // Extract the text content from the Gemini response
-      const jsonStr = data;
-
-      // Parse the extracted JSON
-      const parsedResults = JSON.parse(jsonStr.trim());
-
-      // Enhance the results with additional information and plain language explanations
+      const parsedResults = JSON.parse(data.trim());
       const enhancedResults = enhanceMedicationInfo(parsedResults);
-
-      // Set the results
       setResults(enhancedResults);
+
+      // 2. Wait for DOM to render
+      setTimeout(async () => {
+        try {
+          // Get the URL directly from the function return value
+          const imageUrl = await captureAndUploadImageToIPFS();
+
+          // Set the state for future reference
+          if (imageUrl) {
+            setFileUrl(imageUrl);
+
+            // Pass the URL directly to listNFT
+          } else {
+            throw new Error("Failed to get image URL");
+          }
+        } catch (error) {
+          console.error("Error in NFT creation process:", error);
+          toast.error("Failed to create NFT");
+        }
+      }, 300); // enough delay to ensure rendering
     } catch (err) {
       console.error("Error analyzing prescription:", err);
-      setError(
-        "Failed to analyze the prescription. Please try again with a clearer image."
-      );
+      setError("Failed to analyze the prescription. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -465,6 +494,147 @@ export default function PrescriptionScannerPage() {
 
     return enhancedResults;
   };
+
+  const captureAndUploadImageToIPFS = async (): Promise<string | undefined> => {
+    console.log("Capturing element:", ref.current);
+    if (ref.current === null) return undefined;
+
+    try {
+      const dataUrl = await toPng(ref.current, { cacheBust: true });
+
+      // Convert data URL to Blob
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+
+      console.log("Blob created:", blob);
+
+      // Upload to IPFS
+      const fd = new FormData();
+      fd.append("file", blob, "prescription.png");
+
+      const uploadPromise = uploadFileToIPFS(fd);
+      toast.promise(
+        uploadPromise,
+        {
+          loading: "Uploading Prescription...",
+          success: "Prescription Uploaded Successfully",
+          error: "Error uploading Prescription",
+        },
+        { duration: 5000 }
+      );
+
+      const response = await uploadPromise;
+
+      console.log("IPFS upload response:", response);
+
+      if (response.success === true) {
+        console.log("Pinata URL obtained:", response.pinataURL);
+        return response.pinataURL as string;
+      }
+
+      return undefined;
+    } catch (error) {
+      console.error("Error capturing and uploading certificate image:", error);
+      return undefined;
+    }
+  };
+
+  // Modified uploadMetadataToIPFS that takes the URL as a parameter
+  const uploadMetadataWithUrl = async (
+    imageUrl: string
+  ): Promise<string | undefined> => {
+    if (!name || !description || !imageUrl) {
+      console.error("Missing required metadata fields");
+      return undefined;
+    }
+
+    console.log("Uploading metadata with image URL:", imageUrl);
+
+    const nftJSON = {
+      name,
+      description,
+      price: nftPrice,
+      image: imageUrl,
+    };
+
+    try {
+      const response = await uploadJSONToIPFS(nftJSON);
+      if (response.success === true) {
+        console.log("Metadata uploaded successfully:", response.pinataURL);
+        return response.pinataURL;
+      }
+      return undefined;
+    } catch (e) {
+      console.error("Error uploading JSON metadata:", e);
+      throw e;
+    }
+  };
+
+  // New function to list NFT with explicit URL parameter
+  async function listNFTWithUrl(imageUrl: string) {
+    if (!isConnected) {
+      toast.error("Please connect your wallet to proceed.");
+      return;
+    }
+
+    if (!signer) {
+      toast.error("Signer not available");
+      return;
+    }
+
+    try {
+      const metadataURLPromise = uploadMetadataWithUrl(imageUrl);
+      toast.promise(metadataURLPromise, {
+        loading: "Uploading NFT Metadata...",
+        success: "NFT Metadata Uploaded Successfully",
+        error: "NFT Metadata Upload Failed",
+      });
+
+      const metadataURL = await metadataURLPromise;
+
+      if (!metadataURL) {
+        throw new Error("Failed to get metadata URL");
+      }
+
+      console.log("Metadata URL obtained:", metadataURL);
+
+      const contract = new ethers.Contract(
+        marketplace.address,
+        marketplace.abi,
+        signer
+      );
+      const price = ethers.parseEther(nftPrice);
+
+      console.log(
+        "Creating token with metadata:",
+        metadataURL,
+        "and price:",
+        price.toString()
+      );
+
+      const transactionPromise = contract.createToken(metadataURL, price);
+      toast.promise(transactionPromise, {
+        loading: "Creating NFT...",
+        success: "Transaction submitted",
+        error: "Error creating NFT",
+      });
+
+      const transaction = await transactionPromise;
+      console.log("Transaction submitted:", transaction.hash);
+
+      const receiptPromise = transaction.wait();
+      toast.promise(receiptPromise, {
+        loading: "Waiting for transaction confirmation...",
+        success: "NFT Listed Successfully",
+        error: "Transaction failed",
+      });
+
+      await receiptPromise;
+    } catch (e) {
+      console.error("Error listing NFT:", e);
+      toast.error("Failed to list NFT");
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f5f2]">
@@ -606,7 +776,7 @@ export default function PrescriptionScannerPage() {
                   </div>
                 </div>
               ) : results ? (
-                <div className="neo-brutalist-card p-8">
+                <div ref={ref} className="neo-brutalist-card p-8">
                   <h2 className="text-2xl font-bold mb-6 border-b-2 border-black pb-2">
                     Prescription Analysis Results
                   </h2>
@@ -734,8 +904,13 @@ export default function PrescriptionScannerPage() {
                   </div>
 
                   <div className="mt-6 flex gap-4">
-                    <button className="neo-brutalist-button bg-black text-white flex-1">
-                      Print Information
+                    <button
+                      onClick={async () => {
+                        await listNFTWithUrl(fileUrl);
+                      }}
+                      className="neo-brutalist-button bg-black text-white flex-1"
+                    >
+                      Mint Analysis
                     </button>
                   </div>
                 </div>

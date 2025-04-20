@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import WalletConnectButton from "./WalletConnectButton";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -124,7 +123,6 @@ function NavLinks({ mobile = false }: { mobile?: boolean }) {
           </Link>
         </>
       ))}
-      <WalletConnectButton />
     </>
   );
 }
