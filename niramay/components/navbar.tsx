@@ -101,7 +101,7 @@ function NavLinks({ mobile = false }: { mobile?: boolean }) {
   const links = [
     { href: "/", label: "Home" },
     { href: "/doctor-search", label: "Find Doctor" },
-    // { href: "/diet-coach", label: "Diet Coach" },
+    { href: "/diet-coach", label: "Diet Coach" },
     { href: "/prescription", label: "Scan Prescription" },
     { href: "/doctors", label: "Doctors" },
     { href: "/profile", label: "Profile" },
