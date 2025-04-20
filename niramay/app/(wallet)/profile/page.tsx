@@ -3,7 +3,7 @@ import { User, Mail, Phone, Calendar, Apple } from "lucide-react";
 import { connectDB } from "@/lib/db";
 import UserModel from "@/models/userModel";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../api/auth/[...nextauth]/config";
+import { authOptions } from "../../api/auth/[...nextauth]/config";
 import ProfileRecords from "@/components/ProfileRecords";
 
 type UserData = {
