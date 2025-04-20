@@ -5,3 +5,11 @@ pymongo==4.6.3
 google-generativeai==0.4.1
 python-dotenv==1.0.1
 colorlog==6.9.0
+phidata
+dotenv
+groq
+duckduckgo-search
+requests
+psycopg2
+pyaudio
+pyttsx3
