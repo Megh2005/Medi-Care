@@ -50,21 +50,17 @@ interface CustomError extends Error {
   statusCode?: number;
 }
 
-// Configure logging
 const logger = {
   info: (msg: string): void => console.log(msg),
   error: (msg: string): void => console.error(msg),
 };
 
-// App initialization
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Environment variables
 const MONGO_URI = process.env.MONGO_URI;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
@@ -74,13 +70,11 @@ if (!MONGO_URI || !GEMINI_API_KEY) {
   );
 }
 
-// Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model: GenerativeModel = genAI.getGenerativeModel({
   model: "gemini-2.0-flash",
 });
 
-// MongoDB connection
 let client: MongoClient;
 let collection: any;
 
@@ -97,7 +91,6 @@ async function connectToDatabase(): Promise<void> {
   }
 }
 
-// Helper functions
 async function getDoctors(): Promise<Doctor[]> {
   try {
     return (await collection.find({}).toArray()) as Doctor[];
