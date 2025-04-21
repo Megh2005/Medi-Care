@@ -224,35 +224,126 @@ app.get("/", (_req: Request, res: Response) => {
   res.json({ message: "Chole Ja Bal, Ekhane Kichu Nai 😡🤬" });
 });
 
-app.get("/doctors", (_req: Request, res: Response) => {
-  res.json({ error: "Abar Esechis Bal 🤬🤬" });
+app.post("/match-doctor", (req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    try {
+      const { description } = req.body as HealthDescription;
+
+      if (!description || description.trim().length < 20) {
+        return res.status(400).json({
+          error:
+            "Please provide a more detailed health condition description (at least 20 characters).",
+        });
+      } else {
+        console.log("\x1b[32m%s\x1b[0m", "FINDING THE MOST SUITABLE DOCTOR...");
+      }
+
+      const result = await findBestDoctor(description);
+      res.json(result);
+      console.log("\x1b[34m%s\x1b[0m", "GET WELL SOON");
+    } catch (error) {
+      next(error);
+    }
+  })();
 });
 
-app.post(
-  "/match-doctor",
-  (req: Request, res: Response, next: NextFunction) => {
-    (async () => {
-      try {
-        const { description } = req.body as HealthDescription;
+app.get("/doctors", (_req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    try {
+      console.log("\x1b[32m%s\x1b[0m", "FETCHING ALL DOCTORS...");
 
-        if (!description || description.trim().length < 20) {
-          return res.status(400).json({
-            error:
-              "Please provide a more detailed health condition description (at least 20 characters).",
-          });
-        } else {
-            console.log("\x1b[32m%s\x1b[0m", "FINDING THE MOST SUITABLE DOCTOR...");
-        }
+      const doctors = await getDoctors();
 
-        const result = await findBestDoctor(description);
-        res.json(result);
-        console.log("\x1b[34m%s\x1b[0m", "GET WELL SOON");
-      } catch (error) {
-        next(error);
+      if (!doctors || doctors.length === 0) {
+        return res.status(404).json({
+          error: "No doctors found in the database.",
+        });
       }
-    })();
-  }
-);
+
+      const simplifiedDoctors = doctors.map((doctor) => ({
+        id: doctor._id.toString(),
+        name: doctor.name,
+        degree: doctor.degree,
+        specialist: doctor.specialist,
+        user_rating:
+          typeof doctor.user_rating === "number"
+            ? doctor.user_rating
+            : parseFloat(doctor.user_rating.toString()) || 0.0,
+        email: doctor.email,
+        phone: doctor.phone,
+        location: doctor.location,
+        languages: doctor.languages,
+        specializations: doctor.specializations,
+        availableDays: doctor.availableDays,
+      }));
+
+      res.json(simplifiedDoctors);
+      console.log("\x1b[34m%s\x1b[0m", "DOCTORS FETCHED SUCCESSFULLY");
+    } catch (error) {
+      next(error);
+    }
+  })();
+});
+
+app.get("/doctors/:id", (req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    try {
+      const doctorId = req.params.id;
+      if (!doctorId || doctorId.trim() === "") {
+        return res.status(400).json({
+          error: "Invalid doctor ID provided.",
+        });
+      }
+
+      console.log(
+        "\x1b[32m%s\x1b[0m",
+        `FETCHING DOCTOR WITH ID: ${doctorId}...`
+      );
+
+      let objectId;
+      try {
+        objectId = new ObjectId(doctorId);
+      } catch (error) {
+        return res.status(400).json({
+          error: "Invalid ObjectId format.",
+        });
+      }
+
+      const doctor = await collection.findOne({ _id: objectId });
+
+      if (!doctor) {
+        return res.status(404).json({
+          error: "Doctor not found.",
+        });
+      }
+
+      const doctorInfo = {
+        id: doctor._id.toString(),
+        name: doctor.name,
+        experience: doctor.experience,
+        description: doctor.description,
+        specialist: doctor.specialist,
+        degree: doctor.degree,
+        user_rating:
+          typeof doctor.user_rating === "number"
+            ? doctor.user_rating
+            : parseFloat(doctor.user_rating.toString()) || 0.0,
+        email: doctor.email,
+        phone: doctor.phone,
+        location: doctor.location,
+        languages: doctor.languages,
+        specializations: doctor.specializations,
+        availableDays: doctor.availableDays,
+        availableTimeSlots: doctor.availableTimeSlots,
+      };
+
+      res.json(doctorInfo);
+      console.log("\x1b[34m%s\x1b[0m", "DOCTOR DETAILS FETCHED SUCCESSFULLY");
+    } catch (error) {
+      next(error);
+    }
+  })();
+});
 
 app.use(
   (err: CustomError, _req: Request, res: Response, _next: NextFunction) => {
