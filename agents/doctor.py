@@ -21,9 +21,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
 model = genai.GenerativeModel("gemini-2.0-flash")
-sender_email = "retrospectivesaheb07@gmail.com"
+sender_email = "iammeghdeb@gmail.com"
 sender_name = "Team Medi Care"
-sender_passkey = "rcdezdlrzhkpbvac"
+sender_passkey = os.getenv("SENDER_PASSKEY")
 ACCOUNT_ID = os.getenv("ZOOM_ACCOUNT_ID")
 CLIENT_ID = os.getenv("ZOOM_CLIENT_ID")
 CLIENT_SECRET = os.getenv("ZOOM_CLIENT_SECRET")
@@ -50,8 +50,8 @@ agent = Agent(
 )
 
 engine = pyttsx3.init()
-engine.setProperty("rate", 180)  # Speed of speech (words per minute)
-engine.setProperty("volume", 1.0)  # Volume level (0.0 to 1.0)
+engine.setProperty("rate", 180)
+engine.setProperty("volume", 1.0)
 
 choice = "y"
 
@@ -88,7 +88,7 @@ if choice == "y":
     stream.close()
     p.terminate()
 
-    temp_filename = "live_audio2.mp3"
+    temp_filename = "doctor.mp3"
 
     with wave.open(temp_filename, "wb") as wf:
         wf.setnchannels(CHANNELS)
@@ -97,7 +97,7 @@ if choice == "y":
         wf.writeframes(b"".join(frames))
 
     client = Groq()
-    filename = os.path.dirname(__file__) + "/live_audio2.mp3"
+    filename = os.path.dirname(__file__) + "/doctor.mp3"
 
     with open(filename, "rb") as file:
         transcription = client.audio.transcriptions.create(
@@ -154,7 +154,7 @@ if choice == "y":
     stream.close()
     p.terminate()
 
-    temp_filename = "yes.mp3"
+    temp_filename = "choice.mp3"
 
     with wave.open(temp_filename, "wb") as wf:
         wf.setnchannels(CHANNELS)
@@ -163,7 +163,7 @@ if choice == "y":
         wf.writeframes(b"".join(frames))
 
     client = Groq()
-    filename = os.path.dirname(__file__) + "/yes.mp3"
+    filename = os.path.dirname(__file__) + "/choice.mp3"
 
     with open(filename, "rb") as file:
         transcription = client.audio.transcriptions.create(
@@ -286,7 +286,7 @@ if choice == "y":
         stream.stop_stream()
         stream.close()
         p.terminate()
-        temp_filename = "live_audio3.mp3"
+        temp_filename = "time.mp3"
 
         with wave.open(temp_filename, "wb") as wf:
             wf.setnchannels(CHANNELS)
@@ -295,7 +295,7 @@ if choice == "y":
             wf.writeframes(b"".join(frames))
 
         client = Groq()
-        filename = os.path.dirname(__file__) + "/live_audio3.mp3"
+        filename = os.path.dirname(__file__) + "/time.mp3"
 
         with open(filename, "rb") as file:
             transcription = client.audio.transcriptions.create(
@@ -425,18 +425,25 @@ if choice == "y":
             instructions=[
                 "You are an assistant that sends email of a fixed zoom meeting to a doctor",
                 "The email should be of this format: ",
-                f"""Respected {name_fetched},
-            Mr/Mrs {nam} has booked a consultation with you on {date} at {time_utc} IST.
+                f"""Dear Dr. {name_fetched},
 
-            Here are the meeting details:
-                MEETING ID: {meet_id}
-                MEETING URL: {meet_URL}
-            
-            Please join the Meet at the above given time and date.
-            Regards,
-            Medicare Team
+Your patient {nam} has scheduled a consultation appointment with you for:
+
+Date: {date}
+Time: {time_utc} IST
+
+Meeting Details:
+- Meeting ID: {meet_id}
+- Join via: {meet_URL}
+
+Please access the video consultation using the link above at the scheduled time.
+
+Thank you for your continued support.
+
+Warm regards,
+Medicare Team
             """,
-                "Don't add any extra lines",
+                "Don't add any extra lines and do not remove anything",
             ],
         )
 
