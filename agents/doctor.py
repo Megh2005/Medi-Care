@@ -20,8 +20,9 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
-model = genai.GenerativeModel("gemini-2.0-flash")
-sender_email = "iammeghdeb@gmail.com"
+model_name = os.getenv("GENAI_MODEL_NAME")
+model = genai.GenerativeModel(model_name)
+sender_email = os.getenv("SENDER_EMAIL")
 sender_name = "Team Medi Care"
 sender_passkey = os.getenv("SENDER_PASSKEY")
 ACCOUNT_ID = os.getenv("ZOOM_ACCOUNT_ID")
@@ -29,11 +30,11 @@ CLIENT_ID = os.getenv("ZOOM_CLIENT_ID")
 CLIENT_SECRET = os.getenv("ZOOM_CLIENT_SECRET")
 
 postgres_tool = PostgresTools(
-    host="ep-twilight-rain-a151fuf1.ap-southeast-1.aws.neon.tech",
-    port=5432,
-    db_name="doctors_list",
-    user="doctors_list_owner",
-    password="npg_aoS4ZpTFmP1C",
+    host= os.getenv("DB_HOST"),
+    port= os.getenv("DB_PORT"),
+    db_name= os.getenv("DB_NAME"),
+    user= os.getenv("DB_USER"),
+    password= os.getenv("DB_PASSWORD"),
 )
 agent = Agent(
     model=Groq(id="llama3-70b-8192"),
