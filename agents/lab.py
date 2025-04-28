@@ -25,25 +25,20 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Load the model
-gemini_model = genai.GenerativeModel("gemini-2.0-flash")
+model = os.getenv("GENAI_MODEL_NAME")
+gemini_model = genai.GenerativeModel(model)
 
-# Prompt user to input email tool config manually
-sender_email = "retrospectivesaheb07@gmail.com"
-sender_name = "Team Tech Janta Party"
-sender_passkey = "rcdezdlrzhkpbvac"
+sender_email = os.getenv("SENDER_EMAIL")
+sender_name = os.getenv("SENDER_NAME")
+sender_passkey = os.getenv("SENDER_PASSKEY")
 
 # Initialize the Postgres tool
 postgres_tool = PostgresTools(
-    host="ep-twilight-rain-a151fuf1.ap-southeast-1.aws.neon.tech",
-    port=5432,
-    db_name="doctors_list",
-    user="doctors_list_owner",
-    password="npg_aoS4ZpTFmP1C"
-    # host="ep-sweet-dawn-a1sn9xy2.ap-southeast-1.aws.neon.tech",
-    # port=5432,
-    # db_name="neondb",
-    # user="neondb_owner",
-    # password="npg_UPgC2bu7LpIQ"
+    host=os.getenv("DB_HOST"),
+    port=os.getenv("DB_PORT"),
+    db_name=os.getenv("DB_NAME"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
 )
 
 # Initialize the engine
