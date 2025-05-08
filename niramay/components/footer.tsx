@@ -38,11 +38,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="hover:text-primary">
-                  Services
-                </Link>
-              </li>
-              <li>
                 <Link href="/doctor-search" className="hover:text-primary">
                   Find a Doctor
                 </Link>

@@ -27,9 +27,10 @@ export default function Home() {
           </div>
           <div className="relative h-[400px] neo-brutalist-card p-4">
             <Image
-              src="/hero.png"
+              src="/fav.png"
               alt="Doctor with patient"
               fill
+              priority
               className="object-cover p-2"
               sizes="(max-width: 768px) 100vw, 50vw"
             />
